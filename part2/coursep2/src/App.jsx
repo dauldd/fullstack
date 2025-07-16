@@ -1,4 +1,3 @@
-import React from 'react'
 import Course from './components/course'
 
 const App = () => {
@@ -11,7 +10,7 @@ const App = () => {
         { name: 'Using props to pass data', exercises: 7, id: 2 },
         { name: 'State of a component', exercises: 14, id: 3 },
         { name: 'Redux', exercises: 11, id: 4 }
-      ]
+      ] 
     },
     {
       name: 'Node.js',
