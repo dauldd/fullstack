@@ -60,55 +60,72 @@ const App = () => {
   }
 
   const addPerson = (event) => {
-    event.preventDefault()
+  event.preventDefault()
 
-    const existingPerson = persons.find(p => p.name === newName)
+  const existingPerson = persons.find(p => p.name === newName)
 
-    if (existingPerson) {
-      if (window.confirm(`${newName} is already added, replace number with new?`)) {
-        const updatedPerson = { ...existingPerson, number: newNumber }
-        personsService
-          .update(existingPerson.id, updatedPerson)
-          .then(returnedPerson => {
-            setPersons(persons.map(p => p.id !== existingPerson.id ? p : returnedPerson))
-            setNewName('')
-            setNewNumber('')
-            setMessage({
-              text: `Updated ${returnedPerson.name}`,
-              type: 'success'
-            })
-            setTimeout(() => setMessage(null), 5000)
+  if (existingPerson) {
+    if (window.confirm(`${newName} is already added, replace number with new?`)) {
+      const updatedPerson = { ...existingPerson, number: newNumber }
+      personsService
+        .update(existingPerson.id, updatedPerson)
+        .then(returnedPerson => {
+          setPersons(persons.map(p => p.id !== existingPerson.id ? p : returnedPerson))
+          setNewName('')
+          setNewNumber('')
+          setMessage({
+            text: `Updated ${returnedPerson.name}`,
+            type: 'success'
           })
-          .catch(error => {
-            if (error.response && error.response.status === 404) {
-              setMessage({
-                text: `Information of ${newName} has already been removed from the server`,
-                type: 'error'
-              })
-              setPersons(persons.filter(p => p.id !== existingPerson.id))
-            } else {
-              alert(`Failed to update ${newName}: ${error.message}`)
-            }
-            setTimeout(() => setMessage(null), 5000)
-          })
-      }
-      return
-    }
-
-    const newPerson = { name: newName, number: newNumber }
-    personsService
-      .create(newPerson)
-      .then(returnedPerson => {
-        setPersons(persons.concat(returnedPerson))
-        setNewName('')
-        setNewNumber('')
-        setMessage({
-          text: `Added ${newName}`,
-          type: 'success'
+          setTimeout(() => setMessage(null), 5000)
         })
-        setTimeout(() => setMessage(null), 5000)
-      })
+        .catch(error => {
+          if (error.response && error.response.status === 404) {
+            setMessage({
+              text: `Information of ${newName} has already been removed from the server`,
+              type: 'error'
+            })
+            setPersons(persons.filter(p => p.id !== existingPerson.id))
+          } else if (error.response && error.response.data && error.response.data.error) {
+            setMessage({
+              text: error.response.data.error,
+              type: 'error'
+            })
+          } else {
+            alert(`Failed to update ${newName}: ${error.message}`)
+          }
+          setTimeout(() => setMessage(null), 5000)
+        })
+    }
+    return
   }
+
+  const newPerson = { name: newName, number: newNumber }
+  personsService
+    .create(newPerson)
+    .then(returnedPerson => {
+      setPersons(persons.concat(returnedPerson))
+      setNewName('')
+      setNewNumber('')
+      setMessage({
+        text: `Added ${newName}`,
+        type: 'success'
+      })
+      setTimeout(() => setMessage(null), 5000)
+    })
+    .catch(error => {
+      if (error.response && error.response.data && error.response.data.error) {
+        setMessage({
+          text: error.response.data.error,
+          type: 'error'
+        })
+      } else {
+        alert(`Failed to add ${newName}: ${error.message}`)
+      }
+      setTimeout(() => setMessage(null), 5000)
+    })
+}
+
 
   const personsToShow = filter
     ? persons.filter(person => person.name.toLowerCase().includes(filter.toLowerCase()))
