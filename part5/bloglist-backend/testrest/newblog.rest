@@ -1,0 +1,12 @@
+POST http://localhost:3003/api/blogs
+Authorization: Bearer
+Content-Type: application/json
+
+{
+  "title": "daul's blddsog",
+  "author": "John Doe",
+  "url": "http://example.com",
+  "likes": 12
+} 
+
+// REST is not working sometimes - gotta reload vscode once in a while. Curl always works for me
