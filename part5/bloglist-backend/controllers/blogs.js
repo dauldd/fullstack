@@ -1,13 +1,13 @@
-const blogsRouter = require('express').Router()
-const Blog = require('../models/blog')
-const { userExtractor } = require('../utils/middleware')
+const blogsRouter = require("express").Router()
+const Blog = require("../models/blog")
+const { userExtractor } = require("../utils/middleware")
 
-blogsRouter.get('/', async (request, response) => {
-  const blogs = await Blog.find({}).populate('user', { username: 1, name: 1 })
+blogsRouter.get("/", async (request, response) => {
+  const blogs = await Blog.find({}).populate("user", { username: 1, name: 1 })
   response.json(blogs)
 })
 
-blogsRouter.post('/', userExtractor, async (request, response, next) => {
+blogsRouter.post("/", userExtractor, async (request, response, next) => {
   try {
     const body = request.body
     const user = request.user
@@ -21,7 +21,7 @@ blogsRouter.post('/', userExtractor, async (request, response, next) => {
       author: body.author,
       url: body.url,
       likes: body.likes || 0,
-      user: user._id
+      user: user._id,
     })
 
     const savedBlog = await blog.save()
@@ -34,7 +34,7 @@ blogsRouter.post('/', userExtractor, async (request, response, next) => {
   }
 })
 
-blogsRouter.get('/:id', async (request, response, next) => {
+blogsRouter.get("/:id", async (request, response, next) => {
   try {
     const blog = await Blog.findById(request.params.id)
     if (blog) {
@@ -47,17 +47,17 @@ blogsRouter.get('/:id', async (request, response, next) => {
   }
 })
 
-blogsRouter.delete('/:id', userExtractor, async (request, response, next) => {
+blogsRouter.delete("/:id", userExtractor, async (request, response, next) => {
   try {
     const user = request.user
     const blog = await Blog.findById(request.params.id)
 
     if (!blog) {
-      return response.status(404).json({ error: 'blog not found' })
+      return response.status(404).json({ error: "blog not found" })
     }
 
     if (blog.user.toString() !== user._id.toString()) {
-      return response.status(403).json({ error: 'only creator can delete' })
+      return response.status(403).json({ error: "only creator can delete" })
     }
 
     await Blog.findByIdAndDelete(request.params.id)
@@ -67,7 +67,7 @@ blogsRouter.delete('/:id', userExtractor, async (request, response, next) => {
   }
 })
 
-blogsRouter.put('/:id', async (request, response, next) => {
+blogsRouter.put("/:id", async (request, response, next) => {
   try {
     const { likes } = request.body
 
@@ -82,6 +82,42 @@ blogsRouter.put('/:id', async (request, response, next) => {
     }
 
     response.json(updatedBlog)
+  } catch (error) {
+    next(error)
+  }
+})
+
+blogsRouter.get("/:id/comments", async (request, response, next) => {
+  try {
+    const blog = await Blog.findById(request.params.id)
+    if (blog) {
+      response.json(blog.comments || [])
+    } else {
+      response.status(404).end()
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+
+blogsRouter.post("/:id/comments", async (request, response, next) => {
+  try {
+    const { comment } = request.body
+
+    if (!comment) {
+      return response.status(400).json({ error: "comment is required" })
+    }
+
+    const blog = await Blog.findById(request.params.id)
+
+    if (!blog) {
+      return response.status(404).json({ error: "blog not found" })
+    }
+
+    blog.comments = blog.comments ? blog.comments.concat(comment) : [comment]
+    const updatedBlog = await blog.save()
+
+    response.status(201).json(updatedBlog)
   } catch (error) {
     next(error)
   }
